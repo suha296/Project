@@ -43,7 +43,7 @@ if __name__ == '__main__':
     c = connection.cursor()
     gtfs = []
     siri = []
-    c.execute('SELECT T.route_id, R.agency_id, S.stop_id, S.arrival_time, T.direction_id FROM trips T, stop_times S, routes R WHERE S.trip_id like T.trip_id AND T.route_id like R.route_id')
+    c.execute('')
     row = c.fetchone()
     while row:
         route_id = row[0]
@@ -61,19 +61,20 @@ if __name__ == '__main__':
         route_id = row[0]
         agent = row[1]
         stop_id = row[2]
-        arrival_time = row[3]
-        # arrival_time = time.strftime('%H:%M:%S', time.gmtime(x[3]))
+        arrival_time = time.strftime(row[3], '%H:%M:%S')
         direction = row[4]
         new_trip = Trip(route_id, agent, stop_id, arrival_time, direction)
         siri.append(new_trip)
         row = c.fetchone()
 
 
-    # get list of all agents (without duplicates)
+   # get list of all agents (without duplicates)
     agent_list = set([a.agent for a in siri])
     delays_by_agent = {a: [0,0,0,0] for a in agent_list}
     # date, trip_id, agency_id, route_id, stop_id, planned_time, actual_time, delay, delay_type
     delays_report = []
+    # Agent, current date, #delays_type1, %delays type1, #delays_type2, %delays type2, #delays_type3, %delays type3, #delays_type4, %delays type4, mean, SD
+    statistic_by_agent = []
 
     for g, s in gtfs,siri:
         if g.trip_id == s.trip_id:
@@ -86,3 +87,20 @@ if __name__ == '__main__':
             if delay_type != Delay.no_delay:
                 new_row = [current_date, g.trip_id, agent, g.time, s.time, delay_time, delay_type]
                 delays_report.append(new_row)
+
+    for i in agent_list:
+        all_trips = 0
+        for j in range(4):
+            all_trips += sum(delays_by_agent[i][j])
+        statistic_by_agent[i][0] = i
+        statistic_by_agent[i][1] = current_date
+        statistic_by_agent[i][2] = sum(delays_by_agent[i][0])
+        statistic_by_agent[i][3] = sum(delays_by_agent[i][0]) / all_trips
+        statistic_by_agent[i][4] = sum(delays_by_agent[i][1])
+        statistic_by_agent[i][5] = sum(delays_by_agent[i][1]) / all_trips
+        statistic_by_agent[i][6] = sum(delays_by_agent[i][2])
+        statistic_by_agent[i][7] = sum(delays_by_agent[i][3]) / all_trips
+        statistic_by_agent[i][8] = sum(delays_by_agent[i][4])
+        statistic_by_agent[i][9] = sum(delays_by_agent[i][4]) / all_trips
+        statistic_by_agent[i][10] = #mean 
+        statistic_by_agent[i][11] = #SD
