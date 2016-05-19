@@ -49,17 +49,15 @@ if __name__ == '__main__':
         route_id = row[0]
         agent = row[1]
         stop_id = row[2]
-        arrival_time = time.strftime('%H:%M:%S', time.gmtime(row[3]))
+        arrival_time = time.strptime(row[3], '%H:%M:%S')
         direction = row[4]
         new_trip = Trip(route_id, agent, stop_id, arrival_time, direction)
         gtfs.append(new_trip)
         row = c.fetchone()
 
-    quary = 'SELECT LineRef, OperatorRef, StopRef, Actual_Arrival, DirectionRef FROM siri_feeds WHERE Actual_Arrival < GETDATE()'
     c.execute('SELECT LineRef, OperatorRef, StopRef, Actual_Arrival, DirectionRef FROM siri_feeds WHERE Actual_Arrival < GETDATE()')
     row = c.fetchone()
     while row:
-        #x = c.fetchone()
         route_id = row[0]
         agent = row[1]
         stop_id = row[2]
