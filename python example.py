@@ -43,7 +43,7 @@ if __name__ == '__main__':
     c = connection.cursor()
     gtfs = []
     siri = []
-    c.execute('')
+    c.execute('SELECT T.route_id, R.agency_id, S.stop_id, S.arrival_time, T.direction_id FROM trips T, stop_times S, routes R WHERE S.trip_id like T.trip_id AND T.route_id = R.route_id AND S.stop_id BETWEEN 12812 AND 13100')
     row = c.fetchone()
     while row:
         route_id = row[0]
