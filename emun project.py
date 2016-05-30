@@ -75,8 +75,9 @@ if __name__ == '__main__':
     # get current system time
     current_date = dt.datetime.now()
     # connect to database
-    connection = pymssql.connect(server = 'MARKETERS-AD.COM', user = 'team1n', password = 'wxV20o*7', database = 'emon_team1')
+    # connection = pymssql.connect(server = 'MARKETERS-AD.COM', user = 'team1n', password = 'wxV20o*7', database = 'emon_team1')
     # connection = pymssql.connect(server='MARKETERS-AD.COM', user='team2n', password='J7t6p7s_', database='emon_team2')
+    connection = pymssql.connect(server='MARKETERS-AD.COM', user='backend1n', password='Uktj93!6', database='emon_backend')
     c = connection.cursor(as_dict = True)
     trip_list = []
 
@@ -91,14 +92,13 @@ if __name__ == '__main__':
         if not is_debug:
             delay_type = row["Delay_type"]
         if is_debug:
-            total_delay = random.randrange(0,10,1)
+            total_delay = random.randrange(0, 10, 1)
             delay_type = temp_function(total_delay)
         else:
             total_dalay = row["Total_Delay"]
         new_trip = Trip(route_id, agent, stop_id, arrival_time, direction, delay_type, total_delay)
         trip_list.append(new_trip)
         row = c.fetchone()
-
 
     frequency_by_routeID = {}
     c.execute("SELECT T.route_id,ST.arrival_time FROM trips T, stop_times ST WHERE ST.trip_id = T.trip_id ORDER BY T.route_id, ST.arrival_time")
@@ -114,24 +114,28 @@ if __name__ == '__main__':
     # sort trip_list object by their route_id
     trip_list.sort(key = lambda x: x.route_id)
 
-    old_route_id = trip_list[0].route_id
-    list_of_times = [time.strptime(x, "%H:%M:%S") for x in frequency_by_routeID[old_route_id]]
-    # list_of_times = frequency_by_routeID[old_route_id]
-    for t in trip_list:
-        if t.route_id != old_route_id:
-            list_of_times = [time.strptime(x, "%H:%M:%S") for x in frequency_by_routeID[old_route_id]]
-            old_route_id = t.route_id
-        # calculate planned time by substracting total_dalay from Actual_Time
-        planned_time = t.time - dt.timedelta(minutes = total_delay)
-        line_frequency = diffrence_between_two_trips(planned_time, list_of_times)
-        delay_percent = delay_percent_calculation(t.total_delay, line_frequency)
-        # date, agency_id, route_id, stop_id, planned_time, actual_time, delay, delay_type
-        new_row = (current_date.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], str(t.agent), t.route_id, t.stop_id, planned_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], t.time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], t.total_delay, t.delay_type.name, delay_percent)
-        try:
-            c.execute("INSERT INTO Reports VALUES{0}".format(new_row))
-            continue
-        except pymssql.StandardError as e:
-            print(e)
+    if trip_list:
+        old_route_id = trip_list[0].route_id
+        list_of_times = [time.strptime(x, "%H:%M:%S") for x in frequency_by_routeID[old_route_id]]
+        # list_of_times = frequency_by_routeID[old_route_id]
+        for t in trip_list:
+            if t.route_id != old_route_id:
+                list_of_times = [time.strptime(x, "%H:%M:%S") for x in frequency_by_routeID[old_route_id]]
+                old_route_id = t.route_id
+            # calculate planned time by substracting total_dalay from Actual_Time
+            planned_time = t.time - dt.timedelta(minutes = total_delay)
+            if is_debug:
+                delay_percent = random.uniform(0,1)
+            else:
+                line_frequency = diffrence_between_two_trips(planned_time, list_of_times)
+                delay_percent = delay_percent_calculation(t.total_delay, line_frequency)
+            # date, agency_id, route_id, stop_id, planned_time, actual_time, delay, delay_type
+            new_row = (current_date.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], str(t.agent), t.route_id, t.stop_id, planned_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], t.time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3], t.total_delay, t.delay_type.name, delay_percent)
+            try:
+                c.execute("INSERT INTO Reports VALUES{0}".format(new_row))
+                continue
+            except pymssql.StandardError as e:
+                print(e)
 
     connection.commit()
-
+    x=1
